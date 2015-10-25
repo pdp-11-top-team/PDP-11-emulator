@@ -9,10 +9,17 @@
 #ifndef emulator_h
 #define emulator_h
 #include <stdint.h>
-#define RAM_SIZE 4000
-#define VRAM_SIZE 4000
-#define ROM_SIZE 8000
-#define MEMORY_SIZE 16000
+#include <fcntl.h>
+#define RAM_SIZE 8000
+#define VRAM_SIZE 8000
+#define ROM_SIZE 16000
+#define MEMORY_SIZE 32000
+#define FALSE 0
+#define TRUE 1
+#define INSTR_SIZE 16
+
+typedef uint8_t byte;
+typedef uint16_t word;
 
 struct Registers {
     uint16_t R[7];
@@ -27,12 +34,14 @@ struct Flags {
 
 union Memory {
     struct {
-        uint16_t RAM[RAM_SIZE];
-        uint16_t VRAM[VRAM_SIZE];
-        uint16_t ROM[ROM_SIZE];
+		byte RAM[RAM_SIZE];
+        byte VRAM[VRAM_SIZE];
+        byte ROM[ROM_SIZE];
     };
-    uint16_t memory[MEMORY_SIZE];
+    byte memory[MEMORY_SIZE];
 } memory;
+
+int stop = FALSE;
 
 int emu_run();
 int emu_reset();

@@ -2,7 +2,7 @@
 //  instruction_table.c
 //  emulator.c
 //
-//  Created on 06.10.15.
+//  Created by Jenny on 06.10.15.
 //  Copyright © 2015 com.mipt. All rights reserved.
 //
 
@@ -25,16 +25,16 @@ struct Destination get_rd(instruction instr) {
     return dest;
 }
 
-uint16_t *get_from_memory(uint16_t address) {
+byte *get_from_memory(byte address) {
     return &memory.memory[(int)address];
 }
 
 void get_md(struct Destination *dest) {
-    uint16_t addr;
+    byte addr;
     
     switch (dest->md) {
         case 0:
-            sprintf(dest->dest_disas, "R%d", dest->rd);
+            sprintf(dest->dest_disas, "%%R%d", dest->rd);
             return;
         case 1:
             dest->dest_address = get_from_memory(*(dest->dest_address));
@@ -108,6 +108,6 @@ int fill_table(void) {
     table[i].instruction_diapason.first.instr = 005000;
     table[i].instruction_diapason.last.instr = 005077;
     table[i].function = clt;
-   
+    
     return 0;
 }

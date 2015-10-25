@@ -30,7 +30,7 @@ typedef union Instruction {
         unsigned bw: 1;
     } sa_instr; // single address instruction
     
-    uint16_t instr;
+    word instr;
 } instruction;
 
 typedef struct Field {
@@ -52,7 +52,7 @@ struct Destination {
 };
 
 struct Destination get_rd(instruction instr);
-uint16_t *get_from_memory(uint16_t address);
+byte *get_from_memory(byte address);
 void get_md(struct Destination *dest);
 void set_flags(int n, int c, int z, int v);
 int fill_table(void);

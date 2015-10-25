@@ -1,4 +1,5 @@
-#include "pdp\emulator.c"
+#include "pdp\emulator.h"
+#include <stdio.h>
 
 #pragma once
 
@@ -10,6 +11,7 @@ namespace emulator {
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+	using namespace std;
 
 	/// <summary>
 	/// Сводка для MyForm
@@ -17,12 +19,14 @@ namespace emulator {
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 	public:
+		FILE *disas;
 		MyForm(void)
 		{
 			InitializeComponent();
 			//
 			//TODO: добавьте код конструктора
 			//
+			
 		}
 
 	protected:
@@ -45,12 +49,19 @@ namespace emulator {
 
 	private: System::Windows::Forms::Button^  run;
 	private: System::Windows::Forms::Button^  step;
+	private: System::Windows::Forms::Timer^  timer;
+	private: System::Windows::Forms::ColumnHeader^  columnHeader1;
+
+
+
+
+	private: System::ComponentModel::IContainer^  components;
 
 	private:
 		/// <summary>
 		/// Обязательная переменная конструктора.
 		/// </summary>
-		System::ComponentModel::Container ^components;
+
 
 #pragma region Windows Form Designer generated code
 		/// <summary>
@@ -59,12 +70,15 @@ namespace emulator {
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			this->components = (gcnew System::ComponentModel::Container());
 			this->display = (gcnew System::Windows::Forms::PictureBox());
 			this->assembler = (gcnew System::Windows::Forms::ListView());
 			this->registers = (gcnew System::Windows::Forms::TextBox());
 			this->reset = (gcnew System::Windows::Forms::Button());
 			this->run = (gcnew System::Windows::Forms::Button());
 			this->step = (gcnew System::Windows::Forms::Button());
+			this->timer = (gcnew System::Windows::Forms::Timer(this->components));
+			this->columnHeader1 = (gcnew System::Windows::Forms::ColumnHeader());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->display))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -80,7 +94,12 @@ namespace emulator {
 			// 
 			// assembler
 			// 
+			this->assembler->Columns->AddRange(gcnew cli::array< System::Windows::Forms::ColumnHeader^  >(1) { this->columnHeader1 });
+			this->assembler->FullRowSelect = true;
+			this->assembler->GridLines = true;
 			this->assembler->Location = System::Drawing::Point(352, 12);
+			this->assembler->MinimumSize = System::Drawing::Size(300, 4);
+			this->assembler->MultiSelect = false;
 			this->assembler->Name = L"assembler";
 			this->assembler->Size = System::Drawing::Size(312, 225);
 			this->assembler->TabIndex = 1;
@@ -125,6 +144,16 @@ namespace emulator {
 			this->step->UseVisualStyleBackColor = true;
 			this->step->Click += gcnew System::EventHandler(this, &MyForm::step_Click);
 			// 
+			// timer
+			// 
+			this->timer->Interval = 10;
+			this->timer->Tick += gcnew System::EventHandler(this, &MyForm::timer_Tick);
+			// 
+			// columnHeader1
+			// 
+			this->columnHeader1->Text = L"Assembler";
+			this->columnHeader1->Width = 300;
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -146,16 +175,55 @@ namespace emulator {
 		}
 #pragma endregion
 	private: System::Void reset_Click(System::Object^  sender, System::EventArgs^  e) {
+		this->timer->Stop();
 		emu_reset();
+		this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
+		this->assembler->Items->Clear();
+		this->registers->Text = L"R0:\r\nR1:\r\nR2:\r\nR3:\r\nR4:\r\nSP:\r\nPC:";
+		fclose(disas);
 	}
-	private: System::Void run_Click(System::Object^  sender, System::EventArgs^  e) {
+	private: virtual System::Void run_Click(System::Object^  sender, System::EventArgs^  e) sealed {
+		disas = fopen("pdp/log.txt", "r");
+		this->timer->Start();
+		stop = FALSE;
+		run->Enabled = true;
 		emu_run();
 	}
 	private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
+		stop = TRUE;
 		emu_step();
 	}
 	private: System::Void display_Click(System::Object^  sender, System::EventArgs^  e) {
 		
+	}
+
+	private: String ^get_string() {
+		String^ s;
+		char c[256];
+	
+		if (fgets(c, 256, disas) > 0) {
+			s = gcnew String(c);
+			s += "\n";
+			return s;
+		}
+
+		return nullptr;
+	}
+	
+	private: System::Void timer_Tick(System::Object^  sender, System::EventArgs^  e) {
+		String^ s;
+		String^ r = gcnew String("");
+	
+		if ((s = get_string()) != nullptr) {
+			this->assembler->Items->Add(gcnew ListViewItem(s));
+			this->assembler->View = View::Details;
+			for (int i = 0; i < 7; i++) {
+				r += get_string();
+				r += "\r\n";
+			}
+			this->registers->Text = r;
+		}
+
 	}
 };
 }

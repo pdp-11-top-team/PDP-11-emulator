@@ -2,7 +2,7 @@
 //  main.c
 //  emulator.c
 //
-//  Created on 05.10.15.
+//  Created by Jenny on 05.10.15.
 //  Copyright © 2015 com.mipt. All rights reserved.
 //
 
@@ -14,6 +14,7 @@
 #include "emulator.c"
 
 int main(void) {
+    emu_init();
     emu_run();
     
     return 0;
