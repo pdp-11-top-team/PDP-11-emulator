@@ -19,7 +19,7 @@ namespace emulator {
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 	public:
-		FILE *disas;
+		//FILE *disas;
 		MyForm(void)
 		{
 			InitializeComponent();
@@ -146,8 +146,7 @@ namespace emulator {
 			// 
 			// timer
 			// 
-			this->timer->Interval = 10;
-			this->timer->Tick += gcnew System::EventHandler(this, &MyForm::timer_Tick);
+		
 			// 
 			// columnHeader1
 			// 
@@ -180,24 +179,52 @@ namespace emulator {
 		this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
 		this->assembler->Items->Clear();
 		this->registers->Text = L"R0:\r\nR1:\r\nR2:\r\nR3:\r\nR4:\r\nSP:\r\nPC:";
-		fclose(disas);
 	}
+
+	private: void get_disas() {
+	String^ s = gcnew String(disas);
+	String^ r = gcnew String(reg);// = gcnew String("");
+
+	/*if (sscanf(disas, "%s\n", s) >= 0) {// ((s = get_string()) != nullptr) {
+		this->assembler->Items->Add(gcnew ListViewItem(s));
+		this->assembler->View = View::Details;
+			 for (int i = 0; i < 7; i++) {
+				sscanf(disas, "%s\n", r); // r += get_string();
+				r += "\r\n";
+				 this->registers->Text += r;
+			 }
+			 
+		 }*/
+	 //sscanf_s(disas, "%s", s);
+	 this->assembler->Items->Add(gcnew ListViewItem(s));
+	 this->assembler->View = View::Details;
+	// sscanf_s(reg, "%s", r);
+	 this->registers->Text = r;
+	}
+
 	private: virtual System::Void run_Click(System::Object^  sender, System::EventArgs^  e) sealed {
-		disas = fopen("pdp/log.txt", "r");
-		this->timer->Start();
+		
+		//this->timer->Start();
 		stop = FALSE;
-		run->Enabled = true;
-		emu_run();
+		while (stop == FALSE) {
+			emu_step();
+			//this->disas = fopen("pdp/log.txt", "r");
+			get_disas();
+			//fclose(this->disas);
+		}
 	}
 	private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
 		stop = TRUE;
 		emu_step();
+		//this->disas = fopen("pdp/log.txt", "r");
+		get_disas();
+		//fclose(this->disas);
 	}
 	private: System::Void display_Click(System::Object^  sender, System::EventArgs^  e) {
 		
 	}
 
-	private: String ^get_string() {
+	/*private: String ^get_string() {
 		String^ s;
 		char c[256];
 	
@@ -208,22 +235,8 @@ namespace emulator {
 		}
 
 		return nullptr;
-	}
+	}*/
 	
-	private: System::Void timer_Tick(System::Object^  sender, System::EventArgs^  e) {
-		String^ s;
-		String^ r = gcnew String("");
 	
-		if ((s = get_string()) != nullptr) {
-			this->assembler->Items->Add(gcnew ListViewItem(s));
-			this->assembler->View = View::Details;
-			for (int i = 0; i < 7; i++) {
-				r += get_string();
-				r += "\r\n";
-			}
-			this->registers->Text = r;
-		}
-
-	}
 };
 }

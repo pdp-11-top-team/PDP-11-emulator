@@ -1,6 +1,5 @@
 //
 //  emulator.h
-//  emulator.c
 //
 //  Created on 06.10.15.
 //  Copyright © 2015 com.mipt. All rights reserved.
@@ -17,12 +16,16 @@
 #define FALSE 0
 #define TRUE 1
 #define INSTR_SIZE 16
+#define LEN 256
 
 typedef uint8_t byte;
 typedef uint16_t word;
 
+char disas[LEN];
+char reg[LEN];
+
 struct Registers {
-    uint16_t R[7];
+    word R[7];
 } registers;
 
 struct Flags {
@@ -34,7 +37,7 @@ struct Flags {
 
 union Memory {
     struct {
-		byte RAM[RAM_SIZE];
+        byte RAM[RAM_SIZE];
         byte VRAM[VRAM_SIZE];
         byte ROM[ROM_SIZE];
     };
@@ -43,7 +46,6 @@ union Memory {
 
 int stop = FALSE;
 
-int emu_run();
 int emu_reset();
 int emu_step();
 int init_memory();

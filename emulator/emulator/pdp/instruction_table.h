@@ -1,6 +1,5 @@
 //
 //  instruction_table.h
-//  emulator.c
 //
 //  Created on 06.10.15.
 //  Copyright © 2015 com.mipt. All rights reserved.
@@ -13,6 +12,7 @@
 const int for_check = 1;
 #define is_bigendian() ( (*(char*)&for_check) == 0 )
 #define LEN 256
+#define WRONG_DEST -1
 
 typedef union Instruction {
     struct Da_instr {
@@ -27,7 +27,10 @@ typedef union Instruction {
         unsigned rd: 3;
         unsigned md: 3;
         unsigned opcode: 9;
-        unsigned bw: 1;
+        unsigned bw: 1; // 0000 0000 1010 0000
+        
+        
+        
     } sa_instr; // single address instruction
     
     word instr;
@@ -38,8 +41,8 @@ typedef struct Field {
         instruction first;
         instruction last;
     } instruction_diapason;
-    char *(*function)(instruction);
-    char *assembler;
+    void (*callback)(instruction);
+    char *(*assembler)(instruction);
 } field;
 
 field table[COUNT];
@@ -47,15 +50,15 @@ field table[COUNT];
 struct Destination {
     int rd;
     int md;
-    uint16_t *dest_address;
-    char *dest_disas;
+    word *dest_address;
 };
 
 struct Destination get_rd(instruction instr);
 byte *get_from_memory(byte address);
-void get_md(struct Destination *dest);
+byte get_md(struct Destination *dest);
 void set_flags(int n, int c, int z, int v);
 int fill_table(void);
-char *clt(instruction instr);
+void clt(instruction instr);
+char *clt_disas(instruction instr);
 
 #endif /* instruction_table_h */
