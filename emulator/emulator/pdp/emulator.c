@@ -13,7 +13,7 @@ FILE *file;
 
 int init_memory() { 
     int i = 0;
-    uint8_t b1, b2;
+    int b1, b2;
     
     for (i = 0; i < MEMORY_SIZE; i++) {
         memory.memory[i] = 0;

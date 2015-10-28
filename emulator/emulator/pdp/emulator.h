@@ -49,5 +49,6 @@ int stop = FALSE;
 int emu_reset();
 int emu_step();
 int init_memory();
+int emu_init();
 
 #endif /* emulator_h */

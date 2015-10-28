@@ -1,5 +1,7 @@
-#include "pdp\emulator.h"
 #include <stdio.h>
+extern "C" {
+	#include "pdp\emulator.h"
+}
 
 #pragma once
 
