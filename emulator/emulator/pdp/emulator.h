@@ -9,10 +9,13 @@
 #define emulator_h
 #include <stdint.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#define REGISTERS 7
 #define RAM_SIZE 8000
 #define VRAM_SIZE 8000
 #define ROM_SIZE 16000
-#define MEMORY_SIZE 32000
+#define MEMORY_SIZE (RAM_SIZE + VRAM_SIZE + ROM_SIZE + REGISTERS*2)
+#define R0_INDEX (RAM_SIZE + VRAM_SIZE + ROM_SIZE)
 #define FALSE 0
 #define TRUE 1
 #define INSTR_SIZE 16
@@ -24,10 +27,6 @@ typedef uint16_t word;
 char disas[LEN];
 char reg[LEN];
 
-struct Registers {
-    word R[7];
-} registers;
-
 struct Flags {
     unsigned V: 1; // overflow
     unsigned C: 1; // carry
@@ -36,12 +35,13 @@ struct Flags {
 } flags;
 
 union Memory {
-    struct {
-        byte RAM[RAM_SIZE];
-        byte VRAM[VRAM_SIZE];
-        byte ROM[ROM_SIZE];
-    };
-    byte memory[MEMORY_SIZE];
+	struct {
+		byte RAM[RAM_SIZE];
+		byte VRAM[VRAM_SIZE];
+		byte ROM[ROM_SIZE];
+		word R[REGISTERS];
+	};
+	byte memory[MEMORY_SIZE];
 } memory;
 
 int stop = FALSE;
