@@ -172,7 +172,7 @@ namespace emulator {
 #pragma endregion
 	private: System::Void reset_Click(System::Object^  sender, System::EventArgs^  e) {
 		this->timer->Stop();
-		emu_reset();
+		emu_init();
 		this->display->BackgroundImage = nullptr;
 		this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
 		this->assembler->Items->Clear();
@@ -209,10 +209,12 @@ namespace emulator {
 		}
 	}
 	private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
-		stop = TRUE;
-		emu_step();
-		//this->disas = fopen("pdp/log.txt", "r");
+		if (emu_step() == 0) {
+			stop = TRUE;
+			return;
+		}
 		get_disas();
+		//this->disas = fopen("pdp/log.txt", "r");
 		int index = 0;
 		Bitmap ^picture = gcnew Bitmap(128, 128);
 		int pixel;

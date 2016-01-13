@@ -8,7 +8,7 @@
 #ifndef instruction_table_h
 #define instruction_table_h
 
-#define COUNT 60
+#define COUNT 10
 const int for_check = 1;
 #define is_bigendian() ( (*(char*)&for_check) == 0 )
 #define LEN 256
