@@ -75,12 +75,12 @@ namespace emulator {
 			this->components = (gcnew System::ComponentModel::Container());
 			this->display = (gcnew System::Windows::Forms::PictureBox());
 			this->assembler = (gcnew System::Windows::Forms::ListView());
+			this->columnHeader1 = (gcnew System::Windows::Forms::ColumnHeader());
 			this->registers = (gcnew System::Windows::Forms::TextBox());
 			this->reset = (gcnew System::Windows::Forms::Button());
 			this->run = (gcnew System::Windows::Forms::Button());
 			this->step = (gcnew System::Windows::Forms::Button());
 			this->timer = (gcnew System::Windows::Forms::Timer(this->components));
-			this->columnHeader1 = (gcnew System::Windows::Forms::ColumnHeader());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->display))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -89,10 +89,9 @@ namespace emulator {
 			this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
 			this->display->Location = System::Drawing::Point(22, 12);
 			this->display->Name = L"display";
-			this->display->Size = System::Drawing::Size(260, 225);
+			this->display->Size = System::Drawing::Size(256, 256);
 			this->display->TabIndex = 0;
 			this->display->TabStop = false;
-			this->display->Click += gcnew System::EventHandler(this, &MyForm::display_Click);
 			// 
 			// assembler
 			// 
@@ -107,6 +106,11 @@ namespace emulator {
 			this->assembler->TabIndex = 1;
 			this->assembler->UseCompatibleStateImageBehavior = false;
 			// 
+			// columnHeader1
+			// 
+			this->columnHeader1->Text = L"Assembler";
+			this->columnHeader1->Width = 300;
+			// 
 			// registers
 			// 
 			this->registers->Location = System::Drawing::Point(352, 263);
@@ -118,7 +122,7 @@ namespace emulator {
 			// 
 			// reset
 			// 
-			this->reset->Location = System::Drawing::Point(22, 243);
+			this->reset->Location = System::Drawing::Point(22, 274);
 			this->reset->Name = L"reset";
 			this->reset->Size = System::Drawing::Size(51, 21);
 			this->reset->TabIndex = 3;
@@ -128,7 +132,7 @@ namespace emulator {
 			// 
 			// run
 			// 
-			this->run->Location = System::Drawing::Point(174, 243);
+			this->run->Location = System::Drawing::Point(174, 274);
 			this->run->Name = L"run";
 			this->run->Size = System::Drawing::Size(51, 21);
 			this->run->TabIndex = 5;
@@ -138,22 +142,13 @@ namespace emulator {
 			// 
 			// step
 			// 
-			this->step->Location = System::Drawing::Point(231, 243);
+			this->step->Location = System::Drawing::Point(231, 274);
 			this->step->Name = L"step";
 			this->step->Size = System::Drawing::Size(51, 21);
 			this->step->TabIndex = 6;
 			this->step->Text = L"Step";
 			this->step->UseVisualStyleBackColor = true;
 			this->step->Click += gcnew System::EventHandler(this, &MyForm::step_Click);
-			// 
-			// timer
-			// 
-		
-			// 
-			// columnHeader1
-			// 
-			this->columnHeader1->Text = L"Assembler";
-			this->columnHeader1->Width = 300;
 			// 
 			// MyForm
 			// 
@@ -178,6 +173,7 @@ namespace emulator {
 	private: System::Void reset_Click(System::Object^  sender, System::EventArgs^  e) {
 		this->timer->Stop();
 		emu_reset();
+		this->display->BackgroundImage = nullptr;
 		this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
 		this->assembler->Items->Clear();
 		this->registers->Text = L"R0:\r\nR1:\r\nR2:\r\nR3:\r\nR4:\r\nSP:\r\nPC:";
@@ -209,10 +205,7 @@ namespace emulator {
 		//this->timer->Start();
 		stop = FALSE;
 		while (stop == FALSE) {
-			emu_step();
-			//this->disas = fopen("pdp/log.txt", "r");
-			get_disas();
-			//fclose(this->disas);
+			step_Click(sender, e);
 		}
 	}
 	private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -220,11 +213,26 @@ namespace emulator {
 		emu_step();
 		//this->disas = fopen("pdp/log.txt", "r");
 		get_disas();
+		int index = 0;
+		Bitmap ^picture = gcnew Bitmap(128, 128);
+		int pixel;
+		for (int Xcount = 0; Xcount < picture->Width; Xcount++) {
+			for (int Ycount = 0; Ycount < picture->Height; Ycount++) {
+				/*if (memory.VRAM[index++] == 0) {
+					pixel = 0;
+				}
+				else {
+					pixel = 255;
+				}*/
+				pixel = memory.VRAM[index++];
+				picture->SetPixel(Xcount, Ycount, Color::FromArgb(pixel, pixel, pixel));
+			}
+		}
+		this->display->BackgroundImageLayout = ImageLayout::Center;
+		this->display->BackgroundImage = picture;
 		//fclose(this->disas);
 	}
-	private: System::Void display_Click(System::Object^  sender, System::EventArgs^  e) {
-		
-	}
+
 
 	/*private: String ^get_string() {
 		String^ s;
