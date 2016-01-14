@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#define REGISTERS 7
+#define REGISTERS 8
 #define RAM_SIZE 8000
 #define VRAM_SIZE 8000
 #define ROM_SIZE 16000

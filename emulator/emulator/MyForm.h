@@ -116,7 +116,7 @@ namespace emulator {
 			this->registers->Location = System::Drawing::Point(352, 263);
 			this->registers->Multiline = true;
 			this->registers->Name = L"registers";
-			this->registers->Size = System::Drawing::Size(312, 106);
+			this->registers->Size = System::Drawing::Size(312, 115);
 			this->registers->TabIndex = 2;
 			this->registers->Text = L"R1:\r\nR2:\r\nR3:\r\nR4:\r\nR5:\r\nSP:\r\nPC:";
 			// 
@@ -176,7 +176,7 @@ namespace emulator {
 		this->display->BackgroundImage = nullptr;
 		this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
 		this->assembler->Items->Clear();
-		this->registers->Text = L"R0:\r\nR1:\r\nR2:\r\nR3:\r\nR4:\r\nSP:\r\nPC:";
+		this->registers->Text = L"R0:\r\nR1:\r\nR2:\r\nR3:\r\nR4:\r\nR5:\r\nSP:\r\nPC:";
 	}
 
 	private: void get_disas() {

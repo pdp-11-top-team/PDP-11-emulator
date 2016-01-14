@@ -73,7 +73,7 @@ int get_opb(struct Operand *op) {
 		return addr;
 	case 2:
 		if (op->r == 7) {
-			addr = *get_byte_from_memory(memory.R[6]);
+			addr = *get_byte_from_memory(memory.R[7]);
 		}
 		else {
 			addr = *op->address;
@@ -89,10 +89,10 @@ int get_opb(struct Operand *op) {
 		addr = *get_byte_from_memory(--(*op->address));
 		return addr;
 	case 6:
-		addr = (*op->address) + (*get_byte_from_memory(memory.R[6]));
+		addr = (*op->address) + (*get_byte_from_memory(memory.R[7]));
 		return addr;
 	case 7:
-		addr = *get_byte_from_memory((*op->address) + (*get_byte_from_memory(memory.R[6])));
+		addr = *get_byte_from_memory((*op->address) + (*get_byte_from_memory(memory.R[7])));
 		return addr;
 	}
 
@@ -111,7 +111,7 @@ int get_opw(struct Operand *op) {
 		return addr;
 	case 2:
 		if (op->r == 7) {
-			addr = *get_byte_from_memory(memory.R[6]);
+			addr = *get_byte_from_memory(memory.R[7]);
 		}
 		else {
 			addr = *op->address;
@@ -131,10 +131,10 @@ int get_opw(struct Operand *op) {
 		addr = *get_word_from_memory(*op->address);
 		return addr;
 	case 6:
-		addr = (*op->address) + (*get_word_from_memory(memory.R[6]));
+		addr = (*op->address) + (*get_word_from_memory(memory.R[7]));
 		return addr;
 	case 7:
-		addr = *get_word_from_memory((*op->address) + (*get_word_from_memory(memory.R[6])));
+		addr = *get_word_from_memory((*op->address) + (*get_word_from_memory(memory.R[7])));
 		return addr;
 	}
 
@@ -175,13 +175,13 @@ void handle_callback(int i, instruction instr) {
 		case 2: case 3:
 			source.address += val;
 		case 6: case 7:
-			memory.R[6] += 2;
+			memory.R[7] += 2;
 		}
 		break;
 	case BR:
 		disp = MAXBYTE & instr.instr;
 		if (table[i].callback(0, 0) != 0) {
-			memory.R[6] += 2 * (short)disp;
+			memory.R[7] += 2 * (short)disp;
 		}
 		return;
 	case CTR:
@@ -195,7 +195,7 @@ void handle_callback(int i, instruction instr) {
 	case 2: case 3:
 		dest.address += val;
 	case 6: case 7:
-		memory.R[6] += 2;
+		memory.R[7] += 2;
 	}
 }
 
@@ -208,7 +208,7 @@ char *get_op_disas(struct Operand *op) {
 		return disas;
 	case 2:
 		if (op->r == 7) {
-			sprintf(disas, "#%d", (*get_byte_from_memory(memory.R[6])));
+			sprintf(disas, "#%d", (*get_byte_from_memory(memory.R[7])));
 			return disas;
 		}
 	case 1: case 4:
@@ -218,10 +218,10 @@ char *get_op_disas(struct Operand *op) {
 		sprintf(disas, "ox%x", *get_byte_from_memory(*op->address));
 		return disas;
 	case 6:
-		sprintf(disas, "ox%x", (*op->address) + (*get_byte_from_memory(memory.R[6])));
+		sprintf(disas, "ox%x", (*op->address) + (*get_byte_from_memory(memory.R[7])));
 		return disas;
 	default:
-		sprintf(disas, "ox%x", *get_byte_from_memory((*op->address) + (*get_byte_from_memory(memory.R[6]))));
+		sprintf(disas, "ox%x", *get_byte_from_memory((*op->address) + (*get_byte_from_memory(memory.R[7]))));
 		return disas;
 	}
 }
@@ -387,7 +387,7 @@ char *bne_disas(instruction instr) {
 }
 
 int jmp(int addr, int addrs) {
-	memory.R[6] = addr;
+	memory.R[7] = addr;
 
 	return 0;
 }
