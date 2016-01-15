@@ -216,20 +216,15 @@ namespace emulator {
 		get_disas();
 		//this->disas = fopen("pdp/log.txt", "r");
 		int index = 0;
-		Bitmap ^picture = gcnew Bitmap(64, 64);
-		int pixel;
+		IntPtr scan = IntPtr(&memory.VRAM[0]);
+		Bitmap ^picture = gcnew Bitmap(128, 128, 16, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
+		/* int pixel;
 		for (int Xcount = 0; Xcount < picture->Width; Xcount++) {
 			for (int Ycount = 0; Ycount < picture->Height; Ycount++) {
-				/*if (memory.VRAM[index++] == 0) {
-					pixel = 0;
-				}
-				else {
-					pixel = 255;
-				}*/
 				pixel = memory.VRAM[index++];
 				picture->SetPixel(Xcount, Ycount, Color::FromArgb(pixel, pixel, pixel));
 			}
-		}
+		}*/
 		this->display->BackgroundImageLayout = ImageLayout::Center;
 		this->display->BackgroundImage = picture;
 		//fclose(this->disas);

@@ -19,7 +19,7 @@ int init_memory() { // 00050
 		memory.memory[i] = 0;
 	}
 	for (i = 0; i < VRAM_SIZE; i++) {
-		memory.VRAM[i] = i%255;
+		memory.VRAM[i] = 0;
 	}
 	for (i = RAM_SIZE + VRAM_SIZE; i < MEMORY_SIZE; i += 2) {
 		if (fscanf(file, "%x\n%x\n", &b1, &b2) >= 0) {
