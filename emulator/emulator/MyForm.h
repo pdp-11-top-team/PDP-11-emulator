@@ -216,7 +216,7 @@ namespace emulator {
 		get_disas();
 		//this->disas = fopen("pdp/log.txt", "r");
 		int index = 0;
-		Bitmap ^picture = gcnew Bitmap(128, 128);
+		Bitmap ^picture = gcnew Bitmap(64, 64);
 		int pixel;
 		for (int Xcount = 0; Xcount < picture->Width; Xcount++) {
 			for (int Ycount = 0; Ycount < picture->Height; Ycount++) {

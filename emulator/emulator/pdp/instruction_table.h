@@ -8,13 +8,15 @@
 #ifndef instruction_table_h
 #define instruction_table_h
 
-#define COUNT 10
+#define COUNT 12
 const int for_check = 1;
 #define is_bigendian() ( (*(char*)&for_check) == 0 )
 #define LEN 256
 #define WRONG_DEST -1
-#define MAXBYTE 127
-#define MAXWORD 32767
+#define MAXBYTE 255
+#define MAXWORD 65535
+#define HBYTE 65280
+#define SIGN 128
 #define NPLUSBYTE (*get_byte_from_memory(addr) & MAXBYTE)
 #define NPLUSWORD (*get_word_from_memory(addr) & MAXWORD)
 #define ZPLUSBYTE ((*get_byte_from_memory(addr) == 0) ? 1:0)

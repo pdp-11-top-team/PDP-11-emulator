@@ -25,7 +25,6 @@ int init_memory() { // 00050
 		if (fscanf(file, "%x\n%x\n", &b1, &b2) >= 0) {
 			memory.memory[i] = b2;
 			memory.memory[i + 1] = b1;
-			printf("%x %x\n", b1, b2);
 		} else {
 			break;
 		}
@@ -39,7 +38,7 @@ int init_registers() {
 	int i;
 
 	for (i = 0; i < 7; i++) {
-		memory.R[i] = i + i * 16 + i * 256 + i * 4096 + 12;
+		memory.R[i] = 0;
 	}
 	memory.R[7] = RAM_SIZE + VRAM_SIZE;
 
