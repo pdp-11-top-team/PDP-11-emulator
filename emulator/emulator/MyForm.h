@@ -217,6 +217,7 @@ namespace emulator {
 			stop = TRUE;
 			return;
 		}
+
 		get_disas();
 		int index = 0;
 		IntPtr scan = IntPtr(&memory.VRAM[0]);

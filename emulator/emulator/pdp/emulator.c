@@ -13,7 +13,7 @@ FILE *file;
 
 int init_memory() { // 00050
 	int i = 0;
-	int b1, b2;
+	int b;
 
 	for (i = 0; i < MEMORY_SIZE; i++) {
 		memory.memory[i] = 0;
@@ -21,29 +21,13 @@ int init_memory() { // 00050
 	for (i = 0; i < VRAM_SIZE; i++) {
 		memory.VRAM[i] = 0;
 	}
-	for (i = RAM_SIZE + VRAM_SIZE; i < MEMORY_SIZE; i += 2) {
-		if (fscanf(file, "%x\n%x\n", &b1, &b2) >= 0) {
-			memory.memory[i] = b2;
-			memory.memory[i + 1] = b1;
+	for (i = RAM_SIZE + VRAM_SIZE; i < MEMORY_SIZE; i++) {
+		if (fscanf(file, "%x\n", &b) >= 0) {
+			memory.memory[i] = b;
 		} else {
 			break;
 		}
 	}
-	/* i = RAM_SIZE + VRAM_SIZE;
-		if (fscanf(file, "%x\n%x\n", &b1, &b2) >= 0) {
-			memory.memory[i] = b2;
-			memory.memory[i + 1] = b1;
-		}
-	
-	for (i = 0; i < VRAM_SIZE; i++) {
-		if (fscanf(file, "%x\n", &b1) >= 0) {
-			memory.VRAM[i] = b1;
-		}
-		else {
-			break;
-		}
-	}*/
-
 
 	return 0;
 }
