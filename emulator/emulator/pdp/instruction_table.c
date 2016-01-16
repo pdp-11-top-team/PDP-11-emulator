@@ -147,35 +147,63 @@ void handle_callback(int i, instruction instr) {
 	int val = 0;
 	struct Operand dest = get_rd(instr);
 	struct Operand source;
-	addr = get_opw(&dest);
 	short disp;
 
 	switch (table[i].type) {
-		// if (table[i].type == SA) {
 	case SA:
-		table[i].callback(addr, 0);
 		if (instr.sa_instr.bw == 0) {
+			addr = get_opb(&dest);
 			val = 1;
 		}
 		else {
+			addr = get_opw(&dest);
 			val = 2;
 		}
+		table[i].callback(addr, 0);
 		break;
 	case DA:
 		source = get_rs(instr);
-		addrs = get_opw(&source);
-		table[i].callback(addr, addrs);
 		if (instr.da_instr.bw == 0) {
+			addr = get_opb(&dest);
+			addrs = get_opb(&source);
 			val = 1;
 		}
 		else {
+			addr = get_opw(&dest);
+			addrs = get_opw(&source);
 			val = 2;
 		}
+		table[i].callback(addr, addrs);
 		switch (source.m) {
-		case 2: case 3:
+		case 2: 
+			if (source.r == 7) {
+				memory.R[7] += 2;
+			}
+		case 3:
 			source.address += val;
+			break;
 		case 6: case 7:
 			memory.R[7] += 2;
+			break;
+		}
+		break;
+	case UN:
+		source = get_rs(instr);
+		addr = get_opw(&dest);
+		addrs = get_opw(&source);
+		val = 2;
+		table[i].callback(addr, addrs);
+		switch (source.m) {
+		case 2: 
+			if (source.r == 7) {
+				memory.R[7] += 2;
+			}
+		case 3:
+			source.address += val;
+			break;
+		case 6: case 7:
+			memory.R[7] += 2;
+			break;
 		}
 		break;
 	case BR:
@@ -195,10 +223,16 @@ void handle_callback(int i, instruction instr) {
 	}
 
 	switch (dest.m) {
-	case 2: case 3:
+	case 2: 
+		if (dest.r == 7) {
+			memory.R[7] += 2;
+		}
+	case 3:
 		dest.address += val;
+		break;
 	case 6: case 7:
 		memory.R[7] += 2;
+		break;
 	}
 }
 
@@ -215,16 +249,16 @@ char *get_opb_disas(struct Operand *op) {
 			return disas;
 		}
 	case 1: case 4:
-		sprintf(disas, "ox%x", *op->address);
+		sprintf(disas, "0x%x", *op->address);
 		return disas;
 	case 3: case 5:
-		sprintf(disas, "ox%x", *get_byte_from_memory(*op->address));
+		sprintf(disas, "0x%x", *get_byte_from_memory(*op->address));
 		return disas;
 	case 6:
-		sprintf(disas, "ox%x", (*op->address) + (*get_byte_from_memory(memory.R[7])));
+		sprintf(disas, "0x%x", (*op->address) + (*get_byte_from_memory(memory.R[7])));
 		return disas;
 	default:
-		sprintf(disas, "ox%x", *get_byte_from_memory((*op->address) + (*get_byte_from_memory(memory.R[7]))));
+		sprintf(disas, "0x%x", *get_byte_from_memory((*op->address) + (*get_byte_from_memory(memory.R[7]))));
 		return disas;
 	}
 }
@@ -242,20 +276,19 @@ char *get_opw_disas(struct Operand *op) {
 			return disas;
 		}
 	case 1: case 4:
-		sprintf(disas, "ox%x", *op->address);
+		sprintf(disas, "0x%x", *op->address);
 		return disas;
 	case 3: case 5:
-		sprintf(disas, "ox%x", *get_word_from_memory(*op->address));
+		sprintf(disas, "0x%x", *get_word_from_memory(*op->address));
 		return disas;
 	case 6:
-		sprintf(disas, "ox%x", (*op->address) + (*get_word_from_memory(memory.R[7])));
+		sprintf(disas, "0x%x", (*op->address) + (*get_word_from_memory(memory.R[7])));
 		return disas;
 	default:
-		sprintf(disas, "ox%x", *get_word_from_memory((*op->address) + (*get_word_from_memory(memory.R[7]))));
+		sprintf(disas, "0x%x", *get_word_from_memory((*op->address) + (*get_word_from_memory(memory.R[7]))));
 		return disas;
 	}
 }
-
 void set_flags(int n, int z, int v, int c) {
 	flags.N = n;
 	flags.C = c;
@@ -272,8 +305,7 @@ char *sa_instr_disas(instruction instr, char *op_name) {
 	disas = (char *)malloc(LEN*sizeof(char));
 	if (instr.sa_instr.bw == 0) {
 		dest_disas = get_opb_disas(&dest);
-	}
-	else {
+	} else {
 		dest_disas = get_opw_disas(&dest);
 	}
 
@@ -295,11 +327,30 @@ char *da_instr_disas(instruction instr, char *op_name) {
 	if (instr.sa_instr.bw == 0) {
 		dest_disas = get_opb_disas(&dest);
 		source_disas = get_opb_disas(&source);
-	}
-	else {
+	} else {
 		dest_disas = get_opw_disas(&dest);
 		source_disas = get_opw_disas(&source);
 	}
+
+	sprintf(disas, "%s %s, %s", op_name, source_disas, dest_disas);
+
+	free(dest_disas);
+	free(source_disas);
+
+	return disas;
+}
+
+char *un_instr_disas(instruction instr, char *op_name) {
+	struct Operand dest = get_rd(instr);
+	struct Operand source = get_rs(instr);
+
+	char *disas;
+	char *dest_disas, *source_disas;
+
+	disas = (char *)malloc(LEN*sizeof(char));
+
+	dest_disas = get_opw_disas(&dest);
+	source_disas = get_opw_disas(&source);
 
 	sprintf(disas, "%s %s, %s", op_name, source_disas, dest_disas);
 
@@ -403,7 +454,7 @@ char *incb_disas(instruction instr) {
 
 int cmp(int addr, int addrs) {
 	int n, z;
-	n = ((*get_word_from_memory(addrs) - *get_word_from_memory(addr)) & MAXWORD);
+	n = (((*get_word_from_memory(addrs) - *get_word_from_memory(addr)) & WSIGN) == 0) ? 0 : 1;
 	z = ((*get_word_from_memory(addrs) - *get_word_from_memory(addr)) == 0) ? 1 : 0;
 	set_flags(n, z, 0, 0); // improve
 
@@ -412,7 +463,7 @@ int cmp(int addr, int addrs) {
 
 int cmpb(int addr, int addrs) {
 	int n, z;
-	n = ((*get_byte_from_memory(addrs) - *get_byte_from_memory(addr)) & MAXWORD);
+	n = (((*get_byte_from_memory(addrs) - *get_byte_from_memory(addr)) & SIGN) == 0) ? 0 : 1;
 	z = ((*get_byte_from_memory(addrs) - *get_byte_from_memory(addr)) == 0) ? 1 : 0;
 	set_flags(n, z, 0, 0); // improve
 
@@ -446,25 +497,25 @@ char *jmp_disas(instruction instr) {
 }
 
 int add(int addr, int addrs) {
-	put_value_b(addr, *get_word_from_memory(addr) + *get_byte_from_memory(addrs));
+	put_value_w(addr, *get_word_from_memory(addr) + *get_word_from_memory(addrs));
 	set_flags(NPLUSBYTE, ZPLUSBYTE, 0, 0); // improve!!!!!
 
 	return 0;
 }
 
 char *add_disas(instruction instr) {
-	return da_instr_disas(instr, "ADD");
+	return un_instr_disas(instr, "ADD");
 }
 
 int mul(int addr, int addrs) {
-	put_value_b(addrs, (*get_word_from_memory(addr)) * (*get_byte_from_memory(addrs)));
+	put_value_w(addrs, (*get_word_from_memory(addr)) * (*get_word_from_memory(addrs)));
 	set_flags(NPLUSBYTE, ZPLUSBYTE, 0, 0); // improve!!!!!
 
 	return 0;
 }
 
 char *mul_disas(instruction instr) {
-	return da_instr_disas(instr, "MUL");
+	return un_instr_disas(instr, "MUL");
 }
 
 
@@ -497,8 +548,8 @@ int fill_table(void) {
 	add_instr(020000, 027777, cmpb, cmpb_disas, DA);
 	add_instr(001000, 001377, bne, bne_disas, BR);
 	add_instr(000100, 000177, jmp, jmp_disas, CTR);
-	add_instr(060000, 067777, add, add_disas, DA);
-	add_instr(070000, 070777, mul, mul_disas, DA);
+	add_instr(060000, 067777, add, add_disas, UN);
+	add_instr(070000, 070777, mul, mul_disas, UN);
 
 	return 0;
 }

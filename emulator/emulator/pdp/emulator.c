@@ -29,6 +29,21 @@ int init_memory() { // 00050
 			break;
 		}
 	}
+	/* i = RAM_SIZE + VRAM_SIZE;
+		if (fscanf(file, "%x\n%x\n", &b1, &b2) >= 0) {
+			memory.memory[i] = b2;
+			memory.memory[i + 1] = b1;
+		}
+	
+	for (i = 0; i < VRAM_SIZE; i++) {
+		if (fscanf(file, "%x\n", &b1) >= 0) {
+			memory.VRAM[i] = b1;
+		}
+		else {
+			break;
+		}
+	}*/
+
 
 	return 0;
 }
@@ -99,14 +114,19 @@ int emu_step() {
 	for (i = 0; i < COUNT; i++) {
 		//fprintf(log, "%d\n", i);
         if (check_instr(i, in)) {
-			handle_callback(i, in);
-			//fprintf(log, "0%o %s \nR0: %d \nR1: %d \nR2: %d \nR3: %d \nR4: %d\nSP: %d \nPC: %d \n", in.instr, table[i].assembler(in), registers.R[0],registers.R[1],registers.R[2],registers.R[3],registers.R[4],registers.R[5],registers.R[6]);
 			sprintf(disas, "%06o %s", in.instr, table[i].assembler(in));
+			printf("%06o %s\n", in.instr, table[i].assembler(in));
+			handle_callback(i, in);
+			
+			//fprintf(log, "0%o %s \nR0: %d \nR1: %d \nR2: %d \nR3: %d \nR4: %d\nSP: %d \nPC: %d \n", in.instr, table[i].assembler(in), registers.R[0],registers.R[1],registers.R[2],registers.R[3],registers.R[4],registers.R[5],registers.R[6]);
+		
 			sprintf(reg, "R0: %d \r\nR1: %d \r\nR2: %d \r\nR3: %d \r\nR4: %d\r\nR5: %d\r\nSP: %d \r\nPC: %d \r\n", memory.R[0], memory.R[1], memory.R[2], memory.R[3], memory.R[4], memory.R[5], memory.R[6], memory.R[7]);
-            break;
+			printf("R0: %d \r\nR1: %d \r\nR2: %d \r\nR3: %d \r\nR4: %d\r\nR5: %d\r\nSP: %d \r\nPC: %d \r\n", memory.R[0], memory.R[1], memory.R[2], memory.R[3], memory.R[4], memory.R[5], memory.R[6], memory.R[7]);
+
+			return 1;
         }
     }
 	//fclose(log);
 
-    return in.instr;
+    return 0;
 }

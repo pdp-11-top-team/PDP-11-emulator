@@ -150,6 +150,10 @@ namespace emulator {
 			this->step->UseVisualStyleBackColor = true;
 			this->step->Click += gcnew System::EventHandler(this, &MyForm::step_Click);
 			// 
+			// timer
+			// 
+			this->timer->Tick += gcnew System::EventHandler(this, &MyForm::timer_Tick);
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -201,32 +205,26 @@ namespace emulator {
 	}
 
 	private: virtual System::Void run_Click(System::Object^  sender, System::EventArgs^  e) sealed {
-		
-		//this->timer->Start();
+		this->timer->Start();
 		stop = FALSE;
 		while (stop == FALSE) {
 			step_Click(sender, e);
 		}
 	}
 	private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
+		this->timer->Start();
 		if (emu_step() == 0) {
 			stop = TRUE;
 			return;
 		}
 		get_disas();
-		//this->disas = fopen("pdp/log.txt", "r");
 		int index = 0;
 		IntPtr scan = IntPtr(&memory.VRAM[0]);
-		Bitmap ^picture = gcnew Bitmap(128, 128, 16, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
-		/* int pixel;
-		for (int Xcount = 0; Xcount < picture->Width; Xcount++) {
-			for (int Ycount = 0; Ycount < picture->Height; Ycount++) {
-				pixel = memory.VRAM[index++];
-				picture->SetPixel(Xcount, Ycount, Color::FromArgb(pixel, pixel, pixel));
-			}
-		}*/
+		Bitmap ^picture = gcnew Bitmap(256, 256, 32, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
 		this->display->BackgroundImageLayout = ImageLayout::Center;
 		this->display->BackgroundImage = picture;
+		
+		//this->disas = fopen("pdp/log.txt", "r");
 		//fclose(this->disas);
 	}
 
@@ -245,5 +243,19 @@ namespace emulator {
 	}*/
 	
 	
+private: System::Void timer_Tick(System::Object^  sender, System::EventArgs^  e) {
+	int index = 0;
+	IntPtr scan = IntPtr(&memory.VRAM[0]);
+	Bitmap ^picture = gcnew Bitmap(256, 256, 32, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
+	/* int pixel;
+	for (int Xcount = 0; Xcount < picture->Width; Xcount++) {
+	for (int Ycount = 0; Ycount < picture->Height; Ycount++) {
+	pixel = memory.VRAM[index++];
+	picture->SetPixel(Xcount, Ycount, Color::FromArgb(pixel, pixel, pixel));
+	}
+	}*/
+	this->display->BackgroundImageLayout = ImageLayout::Center;
+	this->display->BackgroundImage = picture;
+}
 };
 }

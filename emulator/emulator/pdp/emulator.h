@@ -11,9 +11,9 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #define REGISTERS 8
-#define RAM_SIZE 8000
-#define VRAM_SIZE 8000
-#define ROM_SIZE 16000
+#define RAM_SIZE 8192
+#define VRAM_SIZE 8192
+#define ROM_SIZE 16384
 #define MEMORY_SIZE (RAM_SIZE + VRAM_SIZE + ROM_SIZE + REGISTERS*2)
 #define R0_INDEX (RAM_SIZE + VRAM_SIZE + ROM_SIZE)
 #define FALSE 0
