@@ -224,7 +224,8 @@ namespace emulator {
 		Bitmap ^picture = gcnew Bitmap(256, 256, 32, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
 		this->display->BackgroundImageLayout = ImageLayout::Center;
 		this->display->BackgroundImage = picture;
-		
+		this->display->Invalidate();
+		this->display->Update();
 		//this->disas = fopen("pdp/log.txt", "r");
 		//fclose(this->disas);
 	}
