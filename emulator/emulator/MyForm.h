@@ -152,7 +152,9 @@ namespace emulator {
 			// 
 			// timer
 			// 
+			this->timer->Interval = 700;
 			this->timer->Tick += gcnew System::EventHandler(this, &MyForm::timer_Tick);
+			this->timer->Enabled = true;
 			// 
 			// MyForm
 			// 
@@ -175,7 +177,6 @@ namespace emulator {
 		}
 #pragma endregion
 	private: System::Void reset_Click(System::Object^  sender, System::EventArgs^  e) {
-		this->timer->Stop();
 		emu_init();
 		this->display->BackgroundImage = nullptr;
 		this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
@@ -205,59 +206,41 @@ namespace emulator {
 	}
 
 	private: virtual System::Void run_Click(System::Object^  sender, System::EventArgs^  e) sealed {
-		this->timer->Start();
 		stop = FALSE;
 		while (stop == FALSE) {
 			step_Click(sender, e);
 		}
 	}
 	private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
-		this->timer->Start();
+		//this->timer->Start();
 		if (emu_step() == 0) {
 			stop = TRUE;
 			return;
 		}
 
 		get_disas();
-		int index = 0;
 		IntPtr scan = IntPtr(&memory.VRAM[0]);
 		Bitmap ^picture = gcnew Bitmap(256, 256, 32, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
 		this->display->BackgroundImageLayout = ImageLayout::Center;
 		this->display->BackgroundImage = picture;
-		this->display->Invalidate();
 		this->display->Update();
-		//this->disas = fopen("pdp/log.txt", "r");
-		//fclose(this->disas);
+		this->assembler->Update();
+		this->assembler->Items[this->assembler->Items->Count - 1]->EnsureVisible();
+		this->registers->Update();
+		
 	}
 
-
-	/*private: String ^get_string() {
-		String^ s;
-		char c[256];
-	
-		if (fgets(c, 256, disas) > 0) {
-			s = gcnew String(c);
-			s += "\n";
-			return s;
-		}
-
-		return nullptr;
-	}*/
 	
 	
 private: System::Void timer_Tick(System::Object^  sender, System::EventArgs^  e) {
-	int index = 0;
+	/*
 	IntPtr scan = IntPtr(&memory.VRAM[0]);
 	Bitmap ^picture = gcnew Bitmap(256, 256, 32, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
-	/* int pixel;
-	for (int Xcount = 0; Xcount < picture->Width; Xcount++) {
-	for (int Ycount = 0; Ycount < picture->Height; Ycount++) {
-	pixel = memory.VRAM[index++];
-	picture->SetPixel(Xcount, Ycount, Color::FromArgb(pixel, pixel, pixel));
-	}
-	}*/
-	this->display->BackgroundImageLayout = ImageLayout::Center;
 	this->display->BackgroundImage = picture;
+	this->display->Update();
+	this->assembler->Update();
+	//this->assembler->Items[this->assembler->Items->Count - 1]->EnsureVisible();
+	this->registers->Update();*/
 }
 };
 }
