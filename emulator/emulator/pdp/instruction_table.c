@@ -13,24 +13,17 @@
 #include "instruction_table.h"
 #include "emulator.h"
 
-struct Operand get_rd(instruction instr) {
+struct Operand get_rd(instruction instr) { // destination
 	struct Operand dest;
 
-	if (instr.sa_instr.bw == 0) {
-		dest.m = instr.sa_instr.md;
-		dest.r = instr.sa_instr.rd;
-		dest.address = get_word_from_memory(instr.sa_instr.rd * 2 + R0_INDEX);
-	}
-	else {
-		dest.m = instr.da_instr.md;
-		dest.r = instr.da_instr.rd;
-		dest.address = get_word_from_memory(instr.da_instr.rd * 2 + R0_INDEX);
-	}
-
+	dest.m = instr.sa_instr.md;
+	dest.r = instr.sa_instr.rd;
+	dest.address = get_word_from_memory(R0_INDEX + instr.sa_instr.rd * 2);
+	
 	return dest;
 }
 
-struct Operand get_rs(instruction instr) {
+struct Operand get_rs(instruction instr) { // source
 	struct Operand source;
 
 	source.m = instr.da_instr.ms;
@@ -48,21 +41,21 @@ word *get_word_from_memory(int address) {
 	return (word *)&memory.memory[address];
 }
 
-void put_value_b(int address, byte value) {
+void put_value_b(int address, byte value) { // put byte in memory
 	byte *dest_address;
 
 	dest_address = get_byte_from_memory(address);
 	*dest_address = value;
 }
 
-void put_value_w(int address, word value) {
+void put_value_w(int address, word value) { // put word in memory
 	word *dest_address;
 
 	dest_address = get_word_from_memory(address);
 	*dest_address = value;
 }
 
-int get_opb(struct Operand *op) {
+int get_opb(struct Operand *op) { // get address for byte operand
 	int addr;
 
 	switch (op->m) {
@@ -74,8 +67,7 @@ int get_opb(struct Operand *op) {
 	case 2:
 		if (op->r == 7) {
 			addr = memory.R[7];
-		}
-		else {
+		} else {
 			addr = *op->address;
 		}
 		return addr;
@@ -96,11 +88,11 @@ int get_opb(struct Operand *op) {
 		return addr;
 	}
 
-	return WRONG_DEST;
+	return WRONG_ADDR;
 }
 
 
-int get_opw(struct Operand *op) {
+int get_opw(struct Operand *op) { // get address for word operand 
 	int addr;
 
 	switch (op->m) {
@@ -112,15 +104,14 @@ int get_opw(struct Operand *op) {
 	case 2:
 		if (op->r == 7) {
 			addr = memory.R[7];
-		}
-		else {
+		} else {
 			addr = *op->address;
 		}
-		//(*op->address) += 2;
+		// then we should (*op->address) += 2;
 		return addr;
 	case 3:
 		addr = *get_word_from_memory(*op->address);
-		//(*op->address) += 2;
+		// then we should (*op->address) += 2;
 		return addr;
 	case 4:
 		*op->address -= 2;
@@ -138,13 +129,27 @@ int get_opw(struct Operand *op) {
 		return addr;
 	}
 
-	return WRONG_DEST;
+	return WRONG_ADDR;
 }
 
+void addr_inc(struct Operand *op, int inc) {
+	switch (op->m) {
+	case 2:
+		if (op->r == 7) {
+			memory.R[7] += 2;
+		}
+	case 3:
+		op->address += inc;
+		break;
+	case 6: case 7:
+		memory.R[7] += 2;
+		break;
+	}
+}
 
-void handle_callback(int i, instruction instr) {
+int handle_callback(int i, instruction instr) {
 	int addr, addrs;
-	int val = 0;
+	int inc = 0;
 	struct Operand dest = get_rd(instr);
 	struct Operand source;
 	short disp;
@@ -153,87 +158,55 @@ void handle_callback(int i, instruction instr) {
 	case SA:
 		if (instr.sa_instr.bw == 0) {
 			addr = get_opb(&dest);
-			val = 1;
-		}
-		else {
+			inc = 1;
+		} else {
 			addr = get_opw(&dest);
-			val = 2;
+			inc = 2;
 		}
 		table[i].callback(addr, 0);
-		break;
+		return 0;
 	case DA:
 		source = get_rs(instr);
 		if (instr.da_instr.bw == 0) {
 			addr = get_opb(&dest);
 			addrs = get_opb(&source);
-			val = 1;
-		}
-		else {
+			inc = 1;
+		} else {
 			addr = get_opw(&dest);
 			addrs = get_opw(&source);
-			val = 2;
+			inc = 2;
 		}
 		table[i].callback(addr, addrs);
-		switch (source.m) {
-		case 2: 
-			if (source.r == 7) {
-				memory.R[7] += 2;
-			}
-		case 3:
-			source.address += val;
-			break;
-		case 6: case 7:
-			memory.R[7] += 2;
-			break;
-		}
+		addr_inc(&source, inc);
 		break;
 	case UN:
 		source = get_rs(instr);
 		addr = get_opw(&dest);
 		addrs = get_opw(&source);
-		val = 2;
+		inc = 2;
 		table[i].callback(addr, addrs);
-		switch (source.m) {
-		case 2: 
-			if (source.r == 7) {
-				memory.R[7] += 2;
-			}
-		case 3:
-			source.address += val;
-			break;
-		case 6: case 7:
-			memory.R[7] += 2;
-			break;
-		}
+		addr_inc(&source, inc);
 		break;
 	case BR:
 		disp = MAXBYTE & instr.instr;
 		if (disp & SIGN) {
 			disp = disp | HBYTE;
 		}
-		if (table[i].callback(0, 0) != 0) {
+		if ((table[i].callback(0, 0)) != 0) {
 			memory.R[7] += 2 * disp;
 		}
-		return;
+		return 0;
+	case CTR_INT:
+		addr = get_opw(&dest);
 	case CTR:
-		table[i].callback(addr, 0);
-		return;
+		return table[i].callback(addr, 0);
 	default:
-		return;
+		return 0;
 	}
 
-	switch (dest.m) {
-	case 2: 
-		if (dest.r == 7) {
-			memory.R[7] += 2;
-		}
-	case 3:
-		dest.address += val;
-		break;
-	case 6: case 7:
-		memory.R[7] += 2;
-		break;
-	}
+	addr_inc(&dest, inc);
+
+	return 0;
 }
 
 char *get_opb_disas(struct Operand *op) {
@@ -289,6 +262,7 @@ char *get_opw_disas(struct Operand *op) {
 		return disas;
 	}
 }
+
 void set_flags(int n, int z, int v, int c) {
 	flags.N = n;
 	flags.C = c;
@@ -374,6 +348,8 @@ char *br_instr_disas(instruction instr, char *op_name) {
 	return disas;
 }
 
+
+// instruction CLR
 int clr(int addr, int addrs) {
 	put_value_w(addr, 0);
 	set_flags(0, 1, 0, 0);
@@ -388,7 +364,6 @@ int clrb(int addr, int addrs) {
 	return 0;
 }
 
-
 char *clr_disas(instruction instr) {
 	return sa_instr_disas(instr, "CLR");
 }
@@ -397,20 +372,35 @@ char *clrb_disas(instruction instr) {
 	return sa_instr_disas(instr, "CLRB");
 }
 
+
+// instruction MOV
 int mov(int addr, int addrs) {
+	int n, z;
+
 	put_value_w(addr, *get_word_from_memory(addrs));
-	set_flags(NPLUSWORD, ZPLUSWORD, 0, flags.C);
+
+	int op = *get_word_from_memory(addr);
+	NWORD(n, op);
+	Z(z, op);
+
+	set_flags(n, z, 0, flags.C);
 
 	return 0;
 }
 
 int movb(int addr, int addrs) {
+	int n, z;
+
 	put_value_b(addr, *get_byte_from_memory(addrs));
-	set_flags(NPLUSBYTE, ZPLUSBYTE, 0, flags.C);
+
+	int op = *get_byte_from_memory(addr);
+	NBYTE(n, op);
+	Z(z, op);
+
+	set_flags(n, z, 0, flags.C);
 
 	return 0;
 }
-
 
 char *mov_disas(instruction instr) {
 	return da_instr_disas(instr, "MOV");
@@ -420,26 +410,38 @@ char *movb_disas(instruction instr) {
 	return da_instr_disas(instr, "MOVB");
 }
 
-int inc(int addr, int addrs) {
-	int v = 0;
 
-	if (*get_word_from_memory(addr) == MAXWORD) {
-		v = 1;
-	}
+//instruction INC
+int inc(int addr, int addrs) {
+	int n, z, v;
+	int op;
+
+	op = *get_word_from_memory(addr) + 1;
+
 	put_value_w(addr, *get_word_from_memory(addr) + 1);
-	set_flags(NPLUSWORD, ZPLUSWORD, v, flags.C);
+
+	VWORD(v, op);
+	NWORD(n, op);
+	Z(z, op);
+	
+	set_flags(n, z, v, flags.C);
 
 	return 0;
 }
 
 int incb(int addr, int addrs) {
-	int v = 0;
+	int n, z, v;
+	int op;
 
-	if (*get_byte_from_memory(addr) == MAXBYTE) {
-		v = 1;
-	}
+	op = *get_byte_from_memory(addr) + 1;
+
 	put_value_b(addr, *get_byte_from_memory(addr) + 1);
-	set_flags(NPLUSBYTE, ZPLUSBYTE, v, flags.C);
+	
+	VBYTE(v, op);
+	NBYTE(n, op);
+	Z(z, op);
+
+	set_flags(n, z, v, flags.C);
 
 	return 0;
 }
@@ -452,20 +454,36 @@ char *incb_disas(instruction instr) {
 	return sa_instr_disas(instr, "INCB");
 }
 
+
+// instruction CMP
 int cmp(int addr, int addrs) {
-	int n, z;
-	n = (((*get_word_from_memory(addrs) - *get_word_from_memory(addr)) & WSIGN) == 0) ? 0 : 1;
-	z = ((*get_word_from_memory(addrs) - *get_word_from_memory(addr)) == 0) ? 1 : 0;
-	set_flags(n, z, 0, 0); // improve
+	int n, z, v, c;
+	int diff;
+
+	diff = *get_word_from_memory(addrs) - *get_word_from_memory(addr);
+
+	VWORD(v, diff);
+	CWORD(c, diff);
+	NWORD(n, diff);
+	Z(z, diff);
+
+	set_flags(n, z, v, c); 
 
 	return 0;
 }
 
 int cmpb(int addr, int addrs) {
-	int n, z;
-	n = (((*get_byte_from_memory(addrs) - *get_byte_from_memory(addr)) & SIGN) == 0) ? 0 : 1;
-	z = ((*get_byte_from_memory(addrs) - *get_byte_from_memory(addr)) == 0) ? 1 : 0;
-	set_flags(n, z, 0, 0); // improve
+	int n, z, v, c;
+	int diff;
+
+	diff = *get_byte_from_memory(addrs) - *get_byte_from_memory(addr);
+
+	VBYTE(v, diff);
+	CBYTE(c, diff);
+	NBYTE(n, diff);
+	Z(z, diff);
+
+	set_flags(n, z, v, c); 
 
 	return 0;
 }
@@ -478,6 +496,8 @@ char *cmpb_disas(instruction instr) {
 	return da_instr_disas(instr, "CMPB");
 }
 
+
+// instruction BNE
 int bne(int addr, int addrs) {
 	return flags.Z == 0;
 }
@@ -486,6 +506,8 @@ char *bne_disas(instruction instr) {
 	return br_instr_disas(instr, "BNE");
 }
 
+
+// instruction JMP
 int jmp(int addr, int addrs) {
 	memory.R[7] = addr;
 
@@ -496,9 +518,22 @@ char *jmp_disas(instruction instr) {
 	return sa_instr_disas(instr, "JMP");
 }
 
+
+// instruction ADD
 int add(int addr, int addrs) {
+	int n, z, v, c;
+	int op;
+
+	op = *get_word_from_memory(addr) + *get_word_from_memory(addrs);
+
 	put_value_w(addr, *get_word_from_memory(addr) + *get_word_from_memory(addrs));
-	set_flags(NPLUSBYTE, ZPLUSBYTE, 0, 0); // improve!!!!!
+	
+	NWORD(n, op);
+	VWORD(v, op);
+	CWORD(c, op);
+	Z(z, op);
+
+	set_flags(n, z, v, c);
 
 	return 0;
 }
@@ -508,8 +543,18 @@ char *add_disas(instruction instr) {
 }
 
 int mul(int addr, int addrs) {
+	int n, z, c;
+	int op;
+
+	op = (*get_word_from_memory(addr)) * (*get_word_from_memory(addrs));
+
 	put_value_w(addrs, (*get_word_from_memory(addr)) * (*get_word_from_memory(addrs)));
-	set_flags(NPLUSBYTE, ZPLUSBYTE, 0, 0); // improve!!!!!
+
+	NWORD(n, op);
+	CWORD(c, op);
+	Z(z, op);
+
+	set_flags(n, z, 0, c); 
 
 	return 0;
 }
@@ -518,6 +563,15 @@ char *mul_disas(instruction instr) {
 	return un_instr_disas(instr, "MUL");
 }
 
+
+//instruction HALT
+int halt(int addr, int addrs) {
+	return HLT;
+}
+
+char *halt_disas(instruction instr) {
+	return "HALT";
+}
 
 void table_init() {
 	table_index = 0;
@@ -535,7 +589,7 @@ void add_instr(word first, word last, int (*callback)(int addr, int addrs), char
 
 int fill_table(void) {
 	if (is_bigendian()) {
-		return 0;
+		exit(WRONG_ENDIAN);
 	}
 
 	add_instr(0105000, 0105077, clr, clr_disas, SA);
@@ -547,9 +601,10 @@ int fill_table(void) {
 	add_instr(0120000, 0127777, cmp, cmp_disas, DA);
 	add_instr(020000, 027777, cmpb, cmpb_disas, DA);
 	add_instr(001000, 001377, bne, bne_disas, BR);
-	add_instr(000100, 000177, jmp, jmp_disas, CTR);
+	add_instr(000100, 000177, jmp, jmp_disas, CTR_INT);
 	add_instr(060000, 067777, add, add_disas, UN);
 	add_instr(070000, 070777, mul, mul_disas, UN);
+	add_instr(000000, 000000, halt, halt_disas, CTR);
 
 	return 0;
 }

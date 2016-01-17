@@ -16,16 +16,14 @@
 #define ROM_SIZE 16384
 #define MEMORY_SIZE (RAM_SIZE + VRAM_SIZE + ROM_SIZE + REGISTERS*2)
 #define R0_INDEX (RAM_SIZE + VRAM_SIZE + ROM_SIZE)
-#define FALSE 0
-#define TRUE 1
 #define INSTR_SIZE 16
 #define LEN 256
 
 typedef uint8_t byte;
 typedef uint16_t word;
 
-char disas[LEN];
-char reg[LEN];
+char disas[LEN]; // to keep step_disas
+char reg[LEN]; // to keep registers_state
 
 struct Flags {
     unsigned V: 1; // overflow
@@ -44,9 +42,6 @@ union Memory {
 	byte memory[MEMORY_SIZE];
 } memory;
 
-int stop = FALSE;
-
-int emu_reset();
 int emu_step();
 int init_memory();
 int emu_init();

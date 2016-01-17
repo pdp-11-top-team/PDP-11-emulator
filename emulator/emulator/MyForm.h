@@ -16,25 +16,18 @@ namespace emulator {
 	using namespace std;
 
 	/// <summary>
-	/// —водка дл€ MyForm
+	/// Pdp-11 emulator
 	/// </summary>
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 	public:
-		//FILE *disas;
 		MyForm(void)
 		{
 			InitializeComponent();
-			//
-			//TODO: добавьте код конструктора
-			//
-			
+			stop = false;
 		}
 
 	protected:
-		/// <summary>
-		/// ќсвободить все используемые ресурсы.
-		/// </summary>
 		~MyForm()
 		{
 			if (components)
@@ -43,33 +36,18 @@ namespace emulator {
 			}
 		}
 	private: System::Windows::Forms::PictureBox^  display;
-	protected:
 	private: System::Windows::Forms::ListView^  assembler;
 	private: System::Windows::Forms::TextBox^  registers;
 	private: System::Windows::Forms::Button^  reset;
-
-
 	private: System::Windows::Forms::Button^  run;
 	private: System::Windows::Forms::Button^  step;
 	private: System::Windows::Forms::Timer^  timer;
 	private: System::Windows::Forms::ColumnHeader^  columnHeader1;
-
-
-
-
 	private: System::ComponentModel::IContainer^  components;
 
-	private:
-		/// <summary>
-		/// ќб€зательна€ переменна€ конструктора.
-		/// </summary>
-
+	private: bool stop;
 
 #pragma region Windows Form Designer generated code
-		/// <summary>
-		/// “ребуемый метод дл€ поддержки конструктора Ч не измен€йте 
-		/// содержимое этого метода с помощью редактора кода.
-		/// </summary>
 		void InitializeComponent(void)
 		{
 			this->components = (gcnew System::ComponentModel::Container());
@@ -116,7 +94,7 @@ namespace emulator {
 			this->registers->Location = System::Drawing::Point(352, 263);
 			this->registers->Multiline = true;
 			this->registers->Name = L"registers";
-			this->registers->Size = System::Drawing::Size(312, 115);
+			this->registers->Size = System::Drawing::Size(312, 135);
 			this->registers->TabIndex = 2;
 			this->registers->Text = L"R1:\r\nR2:\r\nR3:\r\nR4:\r\nR5:\r\nSP:\r\nPC:";
 			// 
@@ -152,9 +130,9 @@ namespace emulator {
 			// 
 			// timer
 			// 
+			this->timer->Enabled = true;
 			this->timer->Interval = 700;
 			this->timer->Tick += gcnew System::EventHandler(this, &MyForm::timer_Tick);
-			this->timer->Enabled = true;
 			// 
 			// MyForm
 			// 
@@ -175,72 +153,55 @@ namespace emulator {
 			this->PerformLayout();
 
 		}
+
 #pragma endregion
-	private: System::Void reset_Click(System::Object^  sender, System::EventArgs^  e) {
-		emu_init();
-		this->display->BackgroundImage = nullptr;
-		this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
-		this->assembler->Items->Clear();
-		this->registers->Text = L"R0:\r\nR1:\r\nR2:\r\nR3:\r\nR4:\r\nR5:\r\nSP:\r\nPC:";
-	}
-
-	private: void get_disas() {
-	String^ s = gcnew String(disas);
-	String^ r = gcnew String(reg);// = gcnew String("");
-
-	/*if (sscanf(disas, "%s\n", s) >= 0) {// ((s = get_string()) != nullptr) {
-		this->assembler->Items->Add(gcnew ListViewItem(s));
-		this->assembler->View = View::Details;
-			 for (int i = 0; i < 7; i++) {
-				sscanf(disas, "%s\n", r); // r += get_string();
-				r += "\r\n";
-				 this->registers->Text += r;
-			 }
-			 
-		 }*/
-	 //sscanf_s(disas, "%s", s);
-	 this->assembler->Items->Add(gcnew ListViewItem(s));
-	 this->assembler->View = View::Details;
-	// sscanf_s(reg, "%s", r);
-	 this->registers->Text = r;
-	}
-
-	private: virtual System::Void run_Click(System::Object^  sender, System::EventArgs^  e) sealed {
-		stop = FALSE;
-		while (stop == FALSE) {
-			step_Click(sender, e);
-		}
-	}
-	private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
-		//this->timer->Start();
-		if (emu_step() == 0) {
-			stop = TRUE;
-			return;
+		private: System::Void reset_Click(System::Object^  sender, System::EventArgs^  e) {
+			emu_init();
+			this->display->BackgroundImage = nullptr;
+			this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
+			this->assembler->Items->Clear();
+			this->registers->Text = L"R0:\r\nR1:\r\nR2:\r\nR3:\r\nR4:\r\nR5:\r\nSP:\r\nPC:\r\nState:";
 		}
 
-		get_disas();
-		IntPtr scan = IntPtr(&memory.VRAM[0]);
-		Bitmap ^picture = gcnew Bitmap(256, 256, 32, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
-		this->display->BackgroundImageLayout = ImageLayout::Center;
-		this->display->BackgroundImage = picture;
-		this->display->Update();
-		this->assembler->Update();
-		this->assembler->Items[this->assembler->Items->Count - 1]->EnsureVisible();
-		this->registers->Update();
+		private: void get_disas() {
+			String^ step_disas = gcnew String(disas);
+			String^ registers_state = gcnew String(reg);
+
+			this->assembler->Items->Add(gcnew ListViewItem(step_disas));
+			this->assembler->View = View::Details;
+			this->registers->Text = registers_state;
+		}
+				 
+		private: void update_components() {
+			IntPtr scan = IntPtr(&memory.VRAM[0]);
+			Bitmap ^picture = gcnew Bitmap(256, 256, 32, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
+
+			this->display->BackgroundImageLayout = ImageLayout::Center;
+			this->display->BackgroundImage = picture;
+			this->display->Update();
+			this->assembler->Update();
+			this->assembler->Items[this->assembler->Items->Count - 1]->EnsureVisible();
+			this->registers->Update();
+		}
+
+		private: virtual System::Void run_Click(System::Object^  sender, System::EventArgs^  e) sealed {
+			stop = false;
+			while (stop == false) {
+				step_Click(sender, e);
+			}
+		}
+
+		private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
+			if (emu_step() <= 0) {
+				stop = true;
+			}
+
+			get_disas();
+			update_components();
+		}
+	
+		private: System::Void timer_Tick(System::Object^  sender, System::EventArgs^  e) {
 		
-	}
-
-	
-	
-private: System::Void timer_Tick(System::Object^  sender, System::EventArgs^  e) {
-	/*
-	IntPtr scan = IntPtr(&memory.VRAM[0]);
-	Bitmap ^picture = gcnew Bitmap(256, 256, 32, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
-	this->display->BackgroundImage = picture;
-	this->display->Update();
-	this->assembler->Update();
-	//this->assembler->Items[this->assembler->Items->Count - 1]->EnsureVisible();
-	this->registers->Update();*/
-}
-};
+		}
+	};	
 }
