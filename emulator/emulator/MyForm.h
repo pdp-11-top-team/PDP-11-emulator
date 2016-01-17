@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <process.h>
+
 extern "C" {
 	#include "pdp\emulator.h"
 }
@@ -13,11 +15,27 @@ namespace emulator {
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+	using namespace System::Threading;
 	using namespace std;
 
 	/// <summary>
 	/// Pdp-11 emulator
 	/// </summary>
+	bool stop;
+
+	public ref class Emu_Bicycle
+	{
+	public:
+		static void emu_routine() {
+			while (stop == false) {
+				int a = emu_step();
+				if (a <= 0) {
+					stop = true;
+				}
+			}
+		}
+	};
+
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 	public:
@@ -45,7 +63,6 @@ namespace emulator {
 	private: System::Windows::Forms::ColumnHeader^  columnHeader1;
 	private: System::ComponentModel::IContainer^  components;
 
-	private: bool stop;
 
 #pragma region Windows Form Designer generated code
 		void InitializeComponent(void)
@@ -131,7 +148,7 @@ namespace emulator {
 			// timer
 			// 
 			this->timer->Enabled = true;
-			this->timer->Interval = 700;
+			this->timer->Interval = 200;
 			this->timer->Tick += gcnew System::EventHandler(this, &MyForm::timer_Tick);
 			// 
 			// MyForm
@@ -156,6 +173,7 @@ namespace emulator {
 
 #pragma endregion
 		private: System::Void reset_Click(System::Object^  sender, System::EventArgs^  e) {
+			timer->Stop();
 			emu_init();
 			this->display->BackgroundImage = nullptr;
 			this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
@@ -186,9 +204,9 @@ namespace emulator {
 
 		private: virtual System::Void run_Click(System::Object^  sender, System::EventArgs^  e) sealed {
 			stop = false;
-			while (stop == false) {
-				step_Click(sender, e);
-			}
+			Thread^ oThread = gcnew Thread(gcnew ThreadStart(&Emu_Bicycle::emu_routine));
+			oThread->Start();
+			oThread->Join();
 		}
 
 		private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -196,12 +214,11 @@ namespace emulator {
 				stop = true;
 			}
 
+		}
+
+		private: System::Void timer_Tick(System::Object^  sender, System::EventArgs^  e) {
 			get_disas();
 			update_components();
-		}
-	
-		private: System::Void timer_Tick(System::Object^  sender, System::EventArgs^  e) {
-		
 		}
 	};	
 }
