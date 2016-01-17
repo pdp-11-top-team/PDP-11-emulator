@@ -54,13 +54,19 @@ int init_flags() {
 }
 
 int emu_init() {
-	file = fopen("pdp/source.txt", "r");
-    init_memory();
-	init_registers();
+	emu_reset();
 	fill_table();
-    
-	fclose(file);
+
     return 0;
+}
+
+int emu_reset() {
+	file = fopen("pdp/source.txt", "r");
+	init_memory();
+	init_registers();
+
+	fclose(file);
+	return 0;
 }
 
 word read_insrtuction(int addr) {

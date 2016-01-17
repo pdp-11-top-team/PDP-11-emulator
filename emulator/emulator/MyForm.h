@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <process.h>
 extern "C" {
 	#include "pdp\emulator.h"
 }
@@ -13,18 +14,35 @@ namespace emulator {
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+	using namespace System::Threading;
 	using namespace std;
 
 	/// <summary>
 	/// Pdp-11 emulator
 	/// </summary>
+
+	bool stop;
+
+	public ref class RunAsync
+	{
+	public:
+		static void emu_run() {
+			stop = false;
+			while (stop == false) {
+				if (emu_step() <= 0) {
+					stop = true;
+				}
+			}
+		}
+	};
+
+
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 	public:
 		MyForm(void)
 		{
 			InitializeComponent();
-			stop = false;
 		}
 
 	protected:
@@ -45,7 +63,7 @@ namespace emulator {
 	private: System::Windows::Forms::ColumnHeader^  columnHeader1;
 	private: System::ComponentModel::IContainer^  components;
 
-	private: bool stop;
+	//private: bool stop;
 
 #pragma region Windows Form Designer generated code
 		void InitializeComponent(void)
@@ -130,7 +148,7 @@ namespace emulator {
 			// 
 			// timer
 			// 
-			this->timer->Enabled = true;
+			//this->timer->Enabled = true;
 			this->timer->Interval = 700;
 			this->timer->Tick += gcnew System::EventHandler(this, &MyForm::timer_Tick);
 			// 
@@ -156,13 +174,14 @@ namespace emulator {
 
 #pragma endregion
 		private: System::Void reset_Click(System::Object^  sender, System::EventArgs^  e) {
-			emu_init();
+			this->timer->Stop();
+			emu_reset();
 			this->display->BackgroundImage = nullptr;
 			this->display->BackColor = System::Drawing::SystemColors::WindowFrame;
 			this->assembler->Items->Clear();
 			this->registers->Text = L"R0:\r\nR1:\r\nR2:\r\nR3:\r\nR4:\r\nR5:\r\nSP:\r\nPC:\r\nState:";
 		}
-
+	 
 		private: void get_disas() {
 			String^ step_disas = gcnew String(disas);
 			String^ registers_state = gcnew String(reg);
@@ -171,7 +190,7 @@ namespace emulator {
 			this->assembler->View = View::Details;
 			this->registers->Text = registers_state;
 		}
-				 
+
 		private: void update_components() {
 			IntPtr scan = IntPtr(&memory.VRAM[0]);
 			Bitmap ^picture = gcnew Bitmap(256, 256, 32, System::Drawing::Imaging::PixelFormat::Format1bppIndexed, scan);
@@ -180,28 +199,31 @@ namespace emulator {
 			this->display->BackgroundImage = picture;
 			this->display->Update();
 			this->assembler->Update();
-			this->assembler->Items[this->assembler->Items->Count - 1]->EnsureVisible();
+			if (this->assembler->Items->Count > 0) {
+				this->assembler->Items[this->assembler->Items->Count - 1]->EnsureVisible();
+			}
 			this->registers->Update();
 		}
 
 		private: virtual System::Void run_Click(System::Object^  sender, System::EventArgs^  e) sealed {
-			stop = false;
-			while (stop == false) {
-				step_Click(sender, e);
-			}
+			this->timer->Start();
+			Thread^ newThread = gcnew Thread(gcnew ThreadStart(&RunAsync::emu_run));
+			newThread->Start();
+			newThread->Join();
+
+			get_disas();
 		}
 
 		private: System::Void step_Click(System::Object^  sender, System::EventArgs^  e) {
-			if (emu_step() <= 0) {
-				stop = true;
-			}
+			emu_step();
 
 			get_disas();
 			update_components();
 		}
 	
 		private: System::Void timer_Tick(System::Object^  sender, System::EventArgs^  e) {
-		
+			update_components();
 		}
-	};	
+	};
+
 }

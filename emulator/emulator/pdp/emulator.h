@@ -42,6 +42,7 @@ union Memory {
 	byte memory[MEMORY_SIZE];
 } memory;
 
+int emu_reset();
 int emu_step();
 int init_memory();
 int emu_init();
